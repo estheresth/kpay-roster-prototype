@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>KPay — Staff Shift Change</title>
+  <!-- Case-study prototype, staff mobile view. Scenario: published roster changed within 48 hours of the shift start. -->
+  <style>
+    :root {
+      --ink: #202124;
+      --muted: #616471;
+      --line: #dde0e7;
+      --surface: #ffffff;
+      --canvas: #f4f4f7;
+      --brand: #5652ff;
+      --brand-dark: #2f2ba8;
+      --brand-soft: #eeeeff;
+      --green: #177d58;
+      --green-soft: #eaf7f1;
+      --amber: #8a5200;
+      --amber-soft: #fff4d6;
+      --red: #b0322f;
+      --red-soft: #fff0f0;
+      --grey-soft: #eceef2;
+      --shadow: 0 8px 24px rgba(27, 27, 45, .07);
+    }
+    * { box-sizing: border-box; }
+    html { background: #e7e7ee; }
+    body {
+      margin: 0 auto; max-width: 430px; min-height: 100vh;
+      color: var(--ink); background: var(--canvas);
+      font: 14px/1.45 Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      padding-bottom: calc(150px + env(safe-area-inset-bottom));
+    }
+    button, textarea { font: inherit; color: inherit; }
+    button { cursor: pointer; }
+    button:focus-visible, a:focus-visible, textarea:focus-visible { outline: 3px solid rgba(86, 82, 255, .45); outline-offset: 2px; }
+
+    .topbar { position: sticky; top: 0; z-index: 5; height: 54px; padding: 0 16px; display: flex; align-items: center; justify-content: space-between; background: var(--surface); border-bottom: 1px solid var(--line); }
+    .brand { display: flex; align-items: center; gap: 10px; }
+    .logo { font-size: 18px; font-weight: 850; letter-spacing: -.5px; }
+    .logo span { color: var(--brand); }
+    .merchant { padding-left: 10px; border-left: 1px solid var(--line); color: var(--muted); font-size: 13px; }
+    .me { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 12px; }
+    .avatar { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--brand-soft); color: var(--brand-dark); font-size: 12px; font-weight: 800; }
+
+    main { padding: 14px 16px; display: grid; gap: 12px; }
+    .card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); }
+    .label { color: var(--muted); font-size: 12px; }
+
+    /* Header */
+    .urgent { display: inline-flex; align-items: center; gap: 6px; justify-self: start; padding: 5px 10px; border-radius: 999px; color: var(--red); background: var(--red-soft); border: 1px solid #efb5b5; font-size: 12px; font-weight: 800; }
+    h1 { margin: -2px 0 0; font-size: 26px; letter-spacing: -.03em; line-height: 1.15; }
+    .head-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: -4px; }
+    .status { padding: 5px 10px; border-radius: 999px; font-size: 12px; font-weight: 800; }
+    .status.awaiting { color: var(--amber); background: var(--amber-soft); }
+    .status.confirmed { color: var(--green); background: var(--green-soft); }
+    .status.unable { color: var(--red); background: var(--red-soft); }
+    .starts { color: var(--red); font-size: 13px; font-weight: 800; }
+
+    /* Shift info */
+    .shift { padding: 14px; }
+    .shift-date { font-size: 17px; font-weight: 800; letter-spacing: -.01em; }
+    .shift-meta { margin-top: 2px; color: var(--muted); }
+    .role { display: inline-flex; align-items: center; gap: 4px; margin-top: 8px; padding: 4px 9px; border: 1px solid #c8c6ff; border-radius: 7px; background: var(--brand-soft); color: var(--brand-dark); font-size: 12px; font-weight: 750; }
+
+    /* What changed */
+    .change { padding: 14px; }
+    .change h2, .support h2 { margin: 0 0 10px; color: var(--muted); font-size: 11px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; }
+    .compare { display: grid; grid-template-columns: 1fr; gap: 6px; }
+    .time { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; padding: 10px 12px; border-radius: 10px; }
+    .time .label { font-size: 11px; font-weight: 700; }
+    .time strong { font-size: 17px; font-weight: 820; letter-spacing: -.02em; line-height: 1.25; }
+    .time.prev { background: var(--grey-soft); }
+    .time.prev strong { color: #6b6f7b; text-decoration: line-through; text-decoration-thickness: 2px; }
+    .time.new { background: var(--brand-soft); border: 1px solid #c8c6ff; }
+    .time.new .label, .time.new strong { color: var(--brand-dark); }
+    .arrow { justify-self: center; color: var(--muted); font-size: 16px; font-weight: 700; line-height: 1; }
+    .diff { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); color: var(--muted); font-size: 13px; }
+    .diff b { color: var(--ink); }
+
+    /* Supporting info */
+    .support { padding: 14px; }
+    .support dl { margin: 0; display: grid; gap: 8px; }
+    .support dl div { display: flex; justify-content: space-between; gap: 12px; }
+    .support dt { color: var(--muted); }
+    .support dd { margin: 0; font-weight: 700; text-align: right; }
+    .notice { margin-top: 10px; padding: 8px 10px; border-radius: 9px; color: var(--red); background: var(--red-soft); border: 1px solid #efb5b5; font-size: 12px; font-weight: 700; }
+    .link { display: inline-block; margin-top: 12px; padding: 0; border: 0; background: none; color: var(--brand-dark); font-weight: 750; text-decoration: underline; text-underline-offset: 3px; }
+
+    /* Response result */
+    .result { padding: 14px; }
+    .result.good { border-color: #b6dfcb; background: var(--green-soft); }
+    .result.bad { border-color: #efb5b5; background: var(--red-soft); }
+    .result h2 { margin: 0 0 4px; font-size: 15px; }
+    .result.good h2 { color: var(--green); }
+    .result.bad h2 { color: var(--red); }
+    .result p { margin: 0; color: var(--ink); }
+    .note { margin-top: 10px; }
+    .note textarea { width: 100%; min-height: 72px; margin-top: 6px; padding: 8px 10px; border: 1px solid #c3c6d0; border-radius: 10px; background: #fff; resize: vertical; }
+    .note-actions { display: flex; justify-content: flex-end; margin-top: 8px; }
+
+    /* Bottom action bar */
+    .action-bar { position: fixed; left: 50%; bottom: 0; z-index: 6; width: 100%; max-width: 430px; transform: translateX(-50%); display: grid; gap: 8px; padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); background: rgba(255,255,255,.97); border-top: 1px solid var(--line); box-shadow: 0 -8px 24px rgba(27,27,45,.06); }
+    .action-bar[hidden] { display: none; }
+    body.responded { padding-bottom: 24px; }
+    body.responded .toast { bottom: 24px; }
+    .btn { height: 48px; padding: 0 14px; border-radius: 11px; border: 1px solid #c3c6d0; background: #fff; color: var(--ink); font-weight: 750; }
+    .btn.primary { border-color: var(--brand); color: #fff; background: var(--brand); }
+    .btn.small { height: 36px; font-size: 13px; }
+    .btn.ghost-red { color: var(--red); border-color: #e3b0ae; }
+
+    /* Roster sheet */
+    dialog { width: 100%; max-width: 430px; max-height: 88vh; margin: auto auto 0; border: 0; border-radius: 18px 18px 0 0; padding: 0; box-shadow: 0 -20px 60px rgba(15,15,25,.25); }
+    dialog::backdrop { background: rgba(24, 25, 31, .45); }
+    .sheet { padding: 8px 16px calc(16px + env(safe-area-inset-bottom)); }
+    .grabber { width: 38px; height: 4px; margin: 0 auto 12px; border-radius: 999px; background: #d5d7df; }
+    .sheet h2 { margin: 0 0 2px; font-size: 18px; }
+    .sheet-sub { margin: 0 0 12px; color: var(--muted); }
+    .rows { list-style: none; margin: 0; padding: 0; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+    .row { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+    .row:last-child { border-bottom: 0; }
+    .row.me-row { background: var(--brand-soft); }
+    .row .name { font-weight: 750; }
+    .row .meta { color: var(--muted); font-size: 12px; }
+    .row .when { font-weight: 750; white-space: nowrap; text-align: right; }
+    .tag { display: inline-block; margin-left: 6px; padding: 1px 6px; border-radius: 6px; background: var(--brand); color: #fff; font-size: 10px; font-weight: 800; vertical-align: 1px; }
+    .sheet .btn { width: 100%; margin-top: 12px; }
+
+    .toast { position: fixed; left: 50%; bottom: calc(150px + env(safe-area-inset-bottom)); z-index: 7; width: calc(100% - 32px); max-width: 398px; padding: 11px 14px; border-radius: 10px; color: #fff; background: #252632; font-size: 13px; opacity: 0; transform: translate(-50%, 10px); pointer-events: none; transition: .2s ease; }
+    .toast.show { opacity: 1; transform: translate(-50%, 0); }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><div class="logo"><span>K</span>Pay</div><div class="merchant">Northside Coffee</div></div>
+    <div class="me"><span>Luca</span><span class="avatar" aria-hidden="true">L</span></div>
+  </header>
+
+  <main>
+    <span class="urgent">⚠ Urgent change · Action required</span>
+    <h1>Your shift has changed</h1>
+    <div class="head-row">
+      <span class="status awaiting" id="status" role="status" aria-live="polite">Awaiting your response</span>
+      <span class="starts">Starts in 8 hours</span>
+    </div>
+
+    <section class="card shift" aria-label="Shift information">
+      <div class="shift-date">Wednesday, 16 September</div>
+      <div class="shift-meta">Northside Coffee · Store 01</div>
+      <span class="role">☕ Barista</span>
+    </section>
+
+    <section class="card change" aria-labelledby="changeTitle">
+      <h2 id="changeTitle">What changed</h2>
+      <div class="compare">
+        <div class="time prev">
+          <span class="label">Previous</span>
+          <strong><span class="sr-only">was </span>12:00 pm–6:00 pm</strong>
+        </div>
+        <span class="arrow" aria-hidden="true">↓</span>
+        <div class="time new">
+          <span class="label">New</span>
+          <strong>6:00 am–12:00 pm</strong>
+        </div>
+      </div>
+      <p class="diff">Starts <b>6 hours earlier</b>. Same length (6 h), same role and location.</p>
+    </section>
+
+    <div id="resultSlot"></div>
+
+    <section class="card support" aria-labelledby="supportTitle">
+      <h2 id="supportTitle">Details</h2>
+      <dl>
+        <div><dt>Updated by</dt><dd>Maya · Store Manager</dd></div>
+        <div><dt>Updated at</dt><dd>Tue 15 Sep, 10:00 pm</dd></div>
+      </dl>
+      <p class="notice">This shift was changed within 48 hours of the start time.</p>
+      <button class="link" id="viewRoster">View updated roster</button>
+    </section>
+  </main>
+
+  <div class="action-bar" id="actionBar">
+    <button class="btn primary" id="confirmBtn">Confirm I can work</button>
+    <button class="btn" id="unableBtn">I’m not available</button>
+  </div>
+
+  <dialog id="rosterSheet" aria-labelledby="rosterTitle">
+    <div class="sheet">
+      <div class="grabber" aria-hidden="true"></div>
+      <h2 id="rosterTitle">Wednesday 16 Sep</h2>
+      <p class="sheet-sub">Store 01 · Updated roster</p>
+      <ul class="rows">
+        <li class="row me-row"><div><div class="name">Luca <span class="tag">Updated</span></div><div class="meta">☕ Barista</div></div><div class="when">06:00–12:00</div></li>
+        <li class="row"><div><div class="name">Alex Chen</div><div class="meta">☕ Barista</div></div><div class="when">06:00–14:00</div></li>
+        <li class="row"><div><div class="name">Jono</div><div class="meta">Cashier / Service</div></div><div class="when">07:00–13:00</div></li>
+        <li class="row"><div><div class="name">Sam Taylor</div><div class="meta">All-rounder</div></div><div class="when">10:00–18:00</div></li>
+      </ul>
+      <button class="btn" id="closeSheet">Close</button>
+    </div>
+  </dialog>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    const statusEl = document.getElementById('status');
+    const slot = document.getElementById('resultSlot');
+    const bar = document.getElementById('actionBar');
+    const sheet = document.getElementById('rosterSheet');
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg; t.classList.add('show');
+      clearTimeout(showToast.timer);
+      showToast.timer = setTimeout(() => t.classList.remove('show'), 2600);
+    }
+
+    function setAwaiting() {
+      statusEl.className = 'status awaiting';
+      statusEl.textContent = 'Awaiting your response';
+      slot.innerHTML = '';
+      bar.hidden = false;
+      document.body.classList.remove('responded');
+      document.getElementById('confirmBtn').focus();
+    }
+
+    function respond(type) {
+      bar.hidden = true;
+      document.body.classList.add('responded');
+      if (type === 'confirmed') {
+        statusEl.className = 'status confirmed';
+        statusEl.textContent = 'Confirmed';
+        slot.innerHTML = `
+          <section class="card result good" tabindex="-1" id="result">
+            <h2>✓ You’re confirmed for 6:00 am</h2>
+            <p>Maya has been notified that you can work this shift.</p>
+            <button class="link" id="changeResponse">Change response</button>
+          </section>`;
+        showToast('Response sent to Maya.');
+      } else {
+        statusEl.className = 'status unable';
+        statusEl.textContent = 'Unable to attend';
+        slot.innerHTML = `
+          <section class="card result bad" tabindex="-1" id="result">
+            <h2>Maya has been notified</h2>
+            <p>This shift is now marked as needing cover. You don’t need to do anything else.</p>
+            <div class="note">
+              <label class="label" for="noteField">Add a note for Maya (optional)</label>
+              <textarea id="noteField" placeholder="e.g. I have class until 11 am"></textarea>
+              <div class="note-actions"><button class="btn small" id="sendNote">Send note</button></div>
+            </div>
+            <button class="link" id="changeResponse">Change response</button>
+          </section>`;
+        showToast('Maya has been notified.');
+      }
+      document.getElementById('result').focus();
+    }
+
+    document.getElementById('confirmBtn').addEventListener('click', () => respond('confirmed'));
+    document.getElementById('unableBtn').addEventListener('click', () => respond('unable'));
+    slot.addEventListener('click', e => {
+      if (e.target.id === 'changeResponse') setAwaiting();
+      if (e.target.id === 'sendNote') {
+        const v = document.getElementById('noteField').value.trim();
+        if (!v) { showToast('Note is optional — nothing to send.'); return; }
+        e.target.closest('.note').innerHTML = '<p class="label">✓ Note sent to Maya</p>';
+        showToast('Note sent to Maya.');
+      }
+    });
+
+    let lastFocus = null;
+    document.getElementById('viewRoster').addEventListener('click', e => { lastFocus = e.currentTarget; sheet.showModal(); });
+    document.getElementById('closeSheet').addEventListener('click', () => sheet.close());
+    sheet.addEventListener('click', e => { if (e.target === sheet) sheet.close(); });
+    sheet.addEventListener('close', () => { if (lastFocus) lastFocus.focus(); });
+  </script>
+  <style>.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}</style>
+</body>
+</html>
