@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>KPay Rostering Prototype</title>
+  <style>
+    :root { --ink:#202124; --muted:#616471; --line:#dde0e7; --brand:#5652ff; --canvas:#f4f4f7; }
+    * { box-sizing: border-box; }
+    body { margin:0; min-height:100vh; display:grid; place-items:center; padding:24px 16px; color:var(--ink); background:var(--canvas);
+      font:15px/1.5 Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    main { width:100%; max-width:560px; }
+    .logo { font-size:20px; font-weight:850; letter-spacing:-.5px; }
+    .logo span { color:var(--brand); }
+    h1 { margin:14px 0 6px; font-size:clamp(26px,5vw,34px); letter-spacing:-.03em; line-height:1.15; }
+    p { margin:0 0 22px; color:var(--muted); }
+    .links { display:grid; gap:12px; }
+    a.card { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:18px 20px; border:1px solid var(--line); border-radius:14px;
+      background:#fff; color:var(--ink); text-decoration:none; box-shadow:0 12px 34px rgba(27,27,45,.08); }
+    a.card:hover { border-color:var(--brand); }
+    a.card:focus-visible { outline:3px solid rgba(86,82,255,.45); outline-offset:2px; }
+    a.card strong { display:block; font-size:16px; }
+    a.card small { color:var(--muted); }
+    .arrow { color:var(--brand); font-size:20px; font-weight:700; }
+    .note { margin-top:18px; font-size:12px; }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="logo"><span>K</span>Pay</div>
+    <h1>Manager rostering prototype</h1>
+    <p>Northside Coffee · Next week’s roster, 14–20 Sep 2026</p>
+    <div class="links">
+      <a class="card" href="kpay-manager-roster.html">
+        <span><strong>Desktop view</strong><small>Full weekly roster table</small></span><span class="arrow" aria-hidden="true">→</span>
+      </a>
+      <a class="card" href="kpay-manager-roster-mobile.html">
+        <span><strong>Mobile view</strong><small>Best viewed on a phone</small></span><span class="arrow" aria-hidden="true">→</span>
+      </a>
+    </div>
+    <p class="note">Low-fidelity case study prototype. All budget and cost figures are illustrative.</p>
+  </main>
+</body>
+</html>
